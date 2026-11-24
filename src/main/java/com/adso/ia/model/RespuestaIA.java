@@ -1,23 +1,22 @@
 package com.adso.ia.model;
 
+// Lo que devuelve Groq después de una consulta: el texto de la respuesta
+// y cuántos tokens (unidades de texto) se consumieron.
 public class RespuestaIA implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private final String texto;
-    private final int tokensEntrada;
-    private final int tokensSalida;
-    private final int tokensTotal;
-    private int consultasRestantes = -1; // dato real de Groq (-1 si no vino)
+    private final int tokens;
+    private int consultasRestantes = -1; // cuota que reporta Groq (-1 si no vino)
     private int limiteConsultas = -1;
 
-    public RespuestaIA(String texto, int tokensEntrada, int tokensSalida, int tokensTotal) {
+    public RespuestaIA(String texto, int tokens) {
         this.texto = texto;
-        this.tokensEntrada = tokensEntrada;
-        this.tokensSalida = tokensSalida;
-        this.tokensTotal = tokensTotal;
+        this.tokens = tokens;
     }
 
+    // Consultas que quedan hoy según las cabeceras de la API de Groq
     public void setCuotaConsultas(int restantes, int limite) {
         this.consultasRestantes = restantes;
         this.limiteConsultas = limite;
@@ -35,8 +34,12 @@ public class RespuestaIA implements java.io.Serializable {
         return texto;
     }
 
-    // Texto listo para pintarlo en el JSP: respeta negrillas y saltos de línea.
-    // Primero escapa el HTML (seguridad) y luego convierte el markdown básico.
+    public int getTokens() {
+        return tokens;
+    }
+
+    // Texto listo para pintarlo en el JSP: escapa el HTML (seguridad)
+    // y convierte el markdown básico (negrillas y viñetas).
     public String getTextoHtml() {
         if (texto == null) return "";
         String h = texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
@@ -44,17 +47,5 @@ public class RespuestaIA implements java.io.Serializable {
         h = h.replaceAll("(?m)^\\* ", "• ");
         h = h.replace("\n", "<br>");
         return h;
-    }
-
-    public int getTokensEntrada() {
-        return tokensEntrada;
-    }
-
-    public int getTokensSalida() {
-        return tokensSalida;
-    }
-
-    public int getTokensTotal() {
-        return tokensTotal;
     }
 }

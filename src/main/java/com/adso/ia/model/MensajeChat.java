@@ -6,24 +6,20 @@ import java.io.Serializable;
 // Se guarda en la sesión para armar el historial.
 public class MensajeChat implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private final String pregunta;
     private final RespuestaIA respuesta; // null si hubo error
     private final String error;          // null si todo salió bien
-    private final String tipo;
 
-    public MensajeChat(String pregunta, RespuestaIA respuesta, String error, String tipo) {
+    public MensajeChat(String pregunta, RespuestaIA respuesta, String error) {
         this.pregunta = pregunta;
         this.respuesta = respuesta;
         this.error = error;
-        this.tipo = tipo;
     }
 
     public RespuestaIA getRespuesta() {
         return respuesta;
-    }
-
-    public String getTipo() {
-        return tipo;
     }
 
     public boolean isError() {

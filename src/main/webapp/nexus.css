@@ -121,15 +121,6 @@ sidebar > div:first-child::-webkit-scrollbar {
     letter-spacing: 0.3px;
 }
 
-.new-chat-btn:hover {
-    background-color: var(--accent-blue-hover);
-    transform: translateY(-1px);
-}
-
-.new-chat-btn:active {
-    transform: scale(0.98);
-}
-
 /* MENÚ / HISTORIAL */
 .history-list {
     list-style: none;
@@ -222,37 +213,27 @@ sidebar > div:first-child::-webkit-scrollbar {
     gap: 2px;
 }
 
-.option-row {
-    position: relative;
-    cursor: pointer;
-}
-
-.option-row input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
-
+/* Fila fija "Normal": solo indica el modo (ya no hay opciones que elegir) */
 .option-row .row-body {
     display: flex;
     align-items: center;
     gap: 7px;
     padding: 5px 8px;
-    border: 1px solid transparent;
+    border: 1px solid var(--accent-blue);
     border-radius: 7px;
-    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    background-color: var(--bg-card);
+    box-shadow: 0 3px 8px rgba(63, 111, 143, 0.12);
 }
 
 .option-row .dot {
     width: 10px;
     height: 10px;
     flex-shrink: 0;
-    border: 1px solid var(--text-muted);
+    border: 1px solid var(--accent-blue);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.2s;
 }
 
 .option-row .dot::after {
@@ -261,8 +242,6 @@ sidebar > div:first-child::-webkit-scrollbar {
     height: 5px;
     border-radius: 50%;
     background-color: var(--accent-blue);
-    transform: scale(0);
-    transition: transform 0.15s ease;
 }
 
 .option-row .row-text {
@@ -274,37 +253,12 @@ sidebar > div:first-child::-webkit-scrollbar {
 .option-row .row-title {
     font-size: 0.78rem;
     color: var(--text-main);
-}
-
-.option-row .row-desc {
-    display: none;
-}
-
-.option-row:hover .row-body {
-    background-color: var(--bg-card);
-}
-
-.option-row input:checked + .row-body {
-    background-color: var(--bg-card);
-    border-color: var(--accent-blue);
-    box-shadow: 0 3px 8px rgba(63, 111, 143, 0.12);
-}
-
-.option-row input:checked + .row-body .dot {
-    border-color: var(--accent-blue);
-}
-
-.option-row input:checked + .row-body .dot::after {
-    transform: scale(1);
-}
-
-.option-row input:checked + .row-body .row-title {
     font-weight: 600;
 }
 
-.option-row input:focus-visible + .row-body {
-    outline: 2px solid var(--accent-blue);
-    outline-offset: 2px;
+.option-row .row-desc {
+    font-size: 0.68rem;
+    color: var(--text-muted);
 }
 
 /* PIE DE LA BARRA LATERAL */
@@ -624,6 +578,15 @@ textarea::-webkit-scrollbar-thumb {
 .history-list::-webkit-scrollbar-thumb:hover,
 textarea::-webkit-scrollbar-thumb:hover {
     background-color: #9DBACD;
+}
+
+/* COLUMNA DE ENTRADA: agrupa caja de texto y opciones debajo */
+.input-column {
+    width: 100%;
+    max-width: 750px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 /* RESPONSIVE */

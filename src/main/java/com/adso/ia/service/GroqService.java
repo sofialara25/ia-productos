@@ -21,10 +21,10 @@ public class GroqService {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    public RespuestaIA preguntar(String system, String user, double temperature)
+    public RespuestaIA preguntar(String system, String user)
             throws GroqException {
 
-        // 1. Armar el JSON que se envía: {model, messages, temperature, max_tokens}
+        // 1. Armar el JSON que se envía: {model, messages, max_tokens}
         JsonObject mensajeSystem = new JsonObject();
         mensajeSystem.addProperty("role", "system");
         mensajeSystem.addProperty("content", system);
@@ -40,9 +40,7 @@ public class GroqService {
         JsonObject cuerpo = new JsonObject();
         cuerpo.addProperty("model", MODELO);
         cuerpo.add("messages", mensajes);
-        cuerpo.addProperty("temperature", temperature);
-        cuerpo.addProperty("max_completion_tokens", 1024);
-        cuerpo.addProperty("reasoning_effort", "low");
+        cuerpo.addProperty("max_tokens", 1024);
 
         // 2. Armar la petición HTTP POST con la key en la cabecera Authorization
         HttpRequest peticion = HttpRequest.newBuilder()
@@ -85,10 +83,7 @@ public class GroqService {
                 .getAsJsonObject("message").get("content").getAsString();
         JsonObject usage = json.getAsJsonObject("usage");
 
-        RespuestaIA r = new RespuestaIA(texto,
-                usage.get("prompt_tokens").getAsInt(),
-                usage.get("completion_tokens").getAsInt(),
-                usage.get("total_tokens").getAsInt());
+        RespuestaIA r = new RespuestaIA(texto, usage.get("total_tokens").getAsInt());
 
         // 5. Consultas restantes reales (cabeceras de Groq; -1 si no vienen)
         int consRest = leerCabeceraEntera(respuesta, "x-ratelimit-remaining-requests");

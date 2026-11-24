@@ -1,10 +1,9 @@
 ﻿<%@ page pageEncoding="UTF-8" %>
 <%@ page import="java.util.List,com.adso.ia.model.MensajeChat" %>
-<% String tipoSel = (String) request.getAttribute("tipoSel"); if (tipoSel == null) tipoSel = "normal";
+<%
    // paginaActiva la declara la página antes del include: "libre" | "comparar" | "prompts"
    String paginaActivaInc = (String) pageContext.getAttribute("paginaActiva");
    if (paginaActivaInc == null) paginaActivaInc = "libre"; %>
-<!-- BARRA LATERAL -->
 <sidebar>
     <div>
         <div class="sidebar-header">
@@ -34,7 +33,7 @@
             <li class="history-item<%= "prompts".equals(paginaActivaInc) ? " active" : "" %>">
                 <a href="prompts.jsp">
                     <svg class="icon" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>
-                    Prompts
+                    Generador
                 </a>
             </li>
         </ul>
@@ -44,8 +43,7 @@
             Personalización
         </div>
         <div class="option-group">
-            <label class="option-row">
-                <input type="radio" name="tipoRespuesta" form="iaForm" value="normal" <%= "normal".equals(tipoSel) ? "checked" : "" %>>
+            <div class="option-row">
                 <div class="row-body">
                     <span class="dot"></span>
                     <div class="row-text">
@@ -53,47 +51,7 @@
                         <span class="row-desc">Respuesta directa y clara</span>
                     </div>
                 </div>
-            </label>
-            <label class="option-row">
-                <input type="radio" name="tipoRespuesta" form="iaForm" value="tecnico" <%= "tecnico".equals(tipoSel) ? "checked" : "" %>>
-                <div class="row-body">
-                    <span class="dot"></span>
-                    <div class="row-text">
-                        <span class="row-title">Técnico</span>
-                        <span class="row-desc">Especificaciones y detalles</span>
-                    </div>
-                </div>
-            </label>
-            <label class="option-row">
-                <input type="radio" name="tipoRespuesta" form="iaForm" value="publicitario" <%= "publicitario".equals(tipoSel) ? "checked" : "" %>>
-                <div class="row-body">
-                    <span class="dot"></span>
-                    <div class="row-text">
-                        <span class="row-title">Publicitario</span>
-                        <span class="row-desc">Tono comercial y persuasivo</span>
-                    </div>
-                </div>
-            </label>
-            <label class="option-row">
-                <input type="radio" name="tipoRespuesta" form="iaForm" value="resena" <%= "resena".equals(tipoSel) ? "checked" : "" %>>
-                <div class="row-body">
-                    <span class="dot"></span>
-                    <div class="row-text">
-                        <span class="row-title">Reseña</span>
-                        <span class="row-desc">Opinión del producto</span>
-                    </div>
-                </div>
-            </label>
-            <label class="option-row">
-                <input type="radio" name="tipoRespuesta" form="iaForm" value="seo" <%= "seo".equals(tipoSel) ? "checked" : "" %>>
-                <div class="row-body">
-                    <span class="dot"></span>
-                    <div class="row-text">
-                        <span class="row-title">SEO</span>
-                        <span class="row-desc">Optimizado para buscadores</span>
-                    </div>
-                </div>
-            </label>
+            </div>
         </div>
 
         <div class="history-category">

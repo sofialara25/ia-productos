@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List,com.adso.ia.model.MensajeChat" %>
+<%@ page import="com.adso.ia.util.Instrucciones" %>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -12,7 +13,6 @@
         <% pageContext.setAttribute("paginaActiva", "libre"); %>
         <%@ include file="sidebar.jspf" %>
 
-    <!-- CHAT PRINCIPAL -->
     <div class="chat-container">
         <div class="chat-header">
             <span class="chat-title">
@@ -26,8 +26,16 @@
             </div>
         </div>
 
-        <!-- MENSAJES: historial completo de la sesión, lo último abajo -->
         <div class="chat-messages" id="chatMessages">
+            <%
+                // Aviso de una sola vez (p. ej. caja vacía): se pinta y se borra
+                Object errChat = request.getAttribute("error");
+                if (errChat == null) errChat = session.getAttribute("error");
+                if (errChat != null) session.removeAttribute("error");
+            %>
+            <% if (errChat != null) { %>
+            <p style="width:100%;color:#fff;background:#C0392B;border-radius:8px;padding:10px 14px;font-size:0.85rem;"><%= Instrucciones.paraTextarea(String.valueOf(errChat)) %></p>
+            <% } %>
             <% List<MensajeChat> historial = (List<MensajeChat>) session.getAttribute("historial");
                if (historial == null || historial.isEmpty()) { %>
             <div class="welcome-screen" id="welcomeScreen">
@@ -47,23 +55,29 @@
             </div>
             <% } else { %>
             <div class="message-wrapper ai">
-                <div class="message-bubble"><%= m.getRespuesta().getTextoHtml() %><br><br><small style="color:#7893A6;"><%= m.getTipo() %> · Tokens: <%= m.getRespuesta().getTokensTotal() %></small></div>
+                <div class="message-bubble"><%= m.getRespuesta().getTextoHtml() %>
+                    <small style="color:#7893A6;">Tokens: <%= m.getRespuesta().getTokens() %></small></div>
             </div>
             <% } } } %>
         </div>
 
-        <!-- INPUT DEL CHAT: form real al Servlet /ia -->
         <div class="chat-input-area">
-            <div class="input-box-wrapper">
-                <form id="iaForm" action="ia" method="post">
-                    <textarea placeholder="Ej: Producto: Audífonos $150.000, batería 20h. Dame una reseña." rows="1" id="userInput" name="pregunta"></textarea>
+            <div class="input-column">
 
-                    <!-- MARCA DE AGUA -->
+                <div class="input-box-wrapper">
+                    <form id="iaForm" action="ia" method="post">
+                        <%
+                            // Prompt traído desde el Generador (?cargar=...): se pinta una vez
+                            String preguntaCarga = (String) session.getAttribute("preguntaChat");
+                            if (preguntaCarga == null) preguntaCarga = "";
+                            else session.removeAttribute("preguntaChat");
+                        %>
+                        <textarea placeholder="Ej: Tenis X-Run Pro $280.000, suela de caucho. Hazme la ficha técnica." rows="1" id="userInput" name="pregunta"><%= Instrucciones.paraTextarea(preguntaCarga) %></textarea>
+
                     <div class="input-watermark">
                         Nexus es una IA y puede cometer errores.
                     </div>
 
-                    <!-- BOTÓN ENVIAR -->
                     <button class="send-btn" type="submit" aria-label="Enviar mensaje">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -71,11 +85,11 @@
                         </svg>
                     </button>
                 </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT -->
     <script>
         function sendMessage() {
             // Envío real: el form hace POST al Servlet /ia
@@ -107,6 +121,25 @@
                 sendMessage();
             }
         });
+
+        // Borrador: lo que escribas se conserva aunque te vayas a otra página
+        // (Comparador, Generador…) y vuelvas por el menú.
+        var CLAVE_BORRADOR = 'nexus-borrador-index';
+        if (textarea.value) {
+            // Texto que vino del servidor (p. ej. desde el Generador): manda él
+            sessionStorage.setItem(CLAVE_BORRADOR, textarea.value);
+        } else if (sessionStorage.getItem(CLAVE_BORRADOR)) {
+            textarea.value = sessionStorage.getItem(CLAVE_BORRADOR);
+        }
+        textarea.addEventListener('input', function () {
+            sessionStorage.setItem(CLAVE_BORRADOR, this.value);
+        });
+        document.getElementById('iaForm').addEventListener('submit', function () {
+            // Tras enviar, la caja empieza limpia (si hubo error, el servidor
+            // devuelve el texto y este borrador ya no hace falta)
+            sessionStorage.removeItem(CLAVE_BORRADOR);
+        });
+        if (textarea.value) textarea.dispatchEvent(new Event('input'));
 
         // Al cargar, baja solo hasta la última respuesta
         var cm = document.getElementById('chatMessages');

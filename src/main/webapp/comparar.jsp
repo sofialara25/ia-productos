@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.adso.ia.model.RespuestaIA" %>
+<%@ page import="com.adso.ia.model.RespuestaIA,com.adso.ia.util.Instrucciones" %>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -10,9 +10,29 @@
     </head>
     <body>
         <% pageContext.setAttribute("paginaActiva", "comparar"); %>
+
+        <%
+            // El aviso se muestra una sola vez: al pintarlo se borra de la sesión
+            Object err = request.getAttribute("error");
+            if (err == null) err = session.getAttribute("error");
+            if (err != null) session.removeAttribute("error");
+
+            // Cada lado guarda su propio prompt
+            String pregA = (String) session.getAttribute("preguntaA");
+            if (pregA == null) pregA = "";
+            String pregB = (String) session.getAttribute("preguntaB");
+            if (pregB == null) pregB = "";
+
+            RespuestaIA rA = (RespuestaIA) request.getAttribute("respuestaA");
+            if (rA == null) rA = (RespuestaIA) session.getAttribute("respuestaA");
+            RespuestaIA rB = (RespuestaIA) request.getAttribute("respuestaB");
+            if (rB == null) rB = (RespuestaIA) session.getAttribute("respuestaB");
+
+            String escPregA = Instrucciones.paraTextarea(pregA);
+            String escPregB = Instrucciones.paraTextarea(pregB);
+        %>
         <%@ include file="sidebar.jspf" %>
 
-    <!-- COMPARADOR -->
     <div class="chat-container">
         <div class="chat-header">
             <span class="chat-title">
@@ -26,94 +46,107 @@
             </div>
         </div>
 
-        <!-- PANELES DIVIDIDOS: mismo prompt, un tipo por lado -->
         <div class="chat-messages" id="chatMessages">
             <style>
-                .cmp-wrap { display:flex; gap:12px; width:100%; flex:1; align-items:stretch; min-height:60vh; }
-                .cmp-panel { flex:1; display:flex; flex-direction:column; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:12px; overflow-y:auto; min-height:320px; }
-                .cmp-panel h4 { color:var(--accent-blue); }
-                .cmp-panel small { color:var(--text-muted); }
-                .cmp-select { border:1px solid var(--border-color); border-radius:20px; padding:6px 14px; font-size:0.85rem; background:var(--chat-user-bg); color:var(--accent-blue); }
-                .cmp-hint { color:var(--text-muted); }
+                .cmp-wrap { display:flex; gap:12px; width:100%; flex:1; align-items:stretch; min-height:44vh; }
+                .cmp-panel { flex:1; display:flex; flex-direction:column; gap:8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:12px; overflow-y:auto; min-height:320px; }
+                .cmp-panel h4 { color:var(--accent-blue); font-size:0.9rem; }
+                .cmp-panel small { color:var(--text-muted); font-size:0.75rem; }
+                .cmp-panel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+                .cmp-side { font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-muted); }
+                .cmp-label { font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--accent-blue); }
+                .cmp-preg { width:100%; resize:vertical; font-size:0.82rem; line-height:1.5; color:var(--text-main); background:var(--bg-main); border:1px solid var(--border-color); border-radius:8px; padding:9px 10px; outline:none; font-family:inherit; min-height:76px; }
+                .cmp-preg:focus { border-color:#8FB6D0; box-shadow:0 0 0 3px rgba(63,111,143,0.12); }
+                .cmp-send { display:flex; justify-content:flex-end; }
+                .cmp-send button { background:var(--accent-blue); color:#fff; border:none; border-radius:20px; padding:7px 17px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; }
+                .cmp-send button:hover { background:var(--accent-blue-hover); }
+                .cmp-resp { font-size:0.9rem; line-height:1.6; white-space:normal; }
                 @media (max-width: 700px) { .cmp-wrap { flex-direction:column; } }
             </style>
-            <% if (request.getAttribute("error") != null || session.getAttribute("error") != null) { %>
-            <p style="color:#fff;background:#C0392B;border-radius:8px;padding:10px;">${error}</p>
+
+            <% if (err != null) { %>
+            <p style="width:100%;color:#fff;background:#C0392B;border-radius:8px;padding:10px 14px;font-size:0.85rem;"><%= Instrucciones.paraTextarea(String.valueOf(err)) %></p>
             <% } %>
+
             <div class="cmp-wrap">
-                <div class="cmp-panel">
-                    <div style="display:flex;justify-content:flex-start;margin-bottom:8px;">
-                        <% String tipoAVal = (String) request.getAttribute("tipoAVal"); if (tipoAVal == null) tipoAVal = (String) session.getAttribute("tipoAVal"); if (tipoAVal == null) tipoAVal = "publicitario"; %>
-                        <select name="tipoA" form="cmpForm" title="Tipo de respuesta izquierda" class="cmp-select">
-                            <option value="normal" <%= "normal".equals(tipoAVal) ? "selected" : "" %>>Normal</option>
-                            <option value="tecnico" <%= "tecnico".equals(tipoAVal) ? "selected" : "" %>>Técnico</option>
-                            <option value="publicitario" <%= "publicitario".equals(tipoAVal) ? "selected" : "" %>>Publicitario</option>
-                            <option value="resena" <%= "resena".equals(tipoAVal) ? "selected" : "" %>>Reseña</option>
-                            <option value="seo" <%= "seo".equals(tipoAVal) ? "selected" : "" %>>SEO</option>
-                        </select>
+                <form class="cmp-panel" id="panelA" action="comparar" method="post">
+                    <input type="hidden" name="lado" value="A">
+                    <div class="cmp-panel-head">
+                        <span class="cmp-side">Izquierda</span>
                     </div>
-                    <% com.adso.ia.model.RespuestaIA rA = (com.adso.ia.model.RespuestaIA) request.getAttribute("respuestaA"); if (rA == null) rA = (com.adso.ia.model.RespuestaIA) session.getAttribute("respuestaA"); if (rA != null) { %>
-                    <h4>Izquierda · ${tipoA}</h4>
-                    <p style="flex:1;"><%= rA.getTextoHtml() %></p>
-                    <small>Tokens: ${respuestaA.tokensTotal}</small>
-                    <% } else { %>
-                    <p class="cmp-hint">Aquí saldrá la respuesta izquierda…</p>
+                    <label class="cmp-label" for="preguntaA">📌 Prompt</label>
+                    <textarea id="preguntaA" name="preguntaA" class="cmp-preg" rows="4" placeholder="Escribe aquí el prompt de este lado…"><%= escPregA %></textarea>
+                    <div class="cmp-send"><button type="submit">▶ Enviar este lado</button></div>
+                    <% if (rA != null) { %>
+                    <h4>Respuesta</h4>
+                    <p class="cmp-resp"><%= rA.getTextoHtml() %></p>
+                    <small>Tokens: <%= rA.getTokens() %></small>
                     <% } %>
-                </div>
-                <div class="cmp-panel">
-                    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-                        <% String tipoBVal = (String) request.getAttribute("tipoBVal"); if (tipoBVal == null) tipoBVal = (String) session.getAttribute("tipoBVal"); if (tipoBVal == null) tipoBVal = "normal"; %>
-                        <select name="tipoB" form="cmpForm" title="Tipo de respuesta derecha" class="cmp-select">
-                            <option value="normal" <%= "normal".equals(tipoBVal) ? "selected" : "" %>>Normal</option>
-                            <option value="tecnico" <%= "tecnico".equals(tipoBVal) ? "selected" : "" %>>Técnico</option>
-                            <option value="publicitario" <%= "publicitario".equals(tipoBVal) ? "selected" : "" %>>Publicitario</option>
-                            <option value="resena" <%= "resena".equals(tipoBVal) ? "selected" : "" %>>Reseña</option>
-                            <option value="seo" <%= "seo".equals(tipoBVal) ? "selected" : "" %>>SEO</option>
-                        </select>
+                </form>
+
+                <form class="cmp-panel" id="panelB" action="comparar" method="post">
+                    <input type="hidden" name="lado" value="B">
+                    <div class="cmp-panel-head">
+                        <span class="cmp-side">Derecha</span>
                     </div>
-                    <% com.adso.ia.model.RespuestaIA rB = (com.adso.ia.model.RespuestaIA) request.getAttribute("respuestaB"); if (rB == null) rB = (com.adso.ia.model.RespuestaIA) session.getAttribute("respuestaB"); if (rB != null) { %>
-                    <h4>${tipoB} · Derecha</h4>
-                    <p style="flex:1;"><%= rB.getTextoHtml() %></p>
-                    <small>Tokens: ${respuestaB.tokensTotal}</small>
-                    <% } else { %>
-                    <p class="cmp-hint">Aquí saldrá la respuesta derecha…</p>
-                    <% }%>
-                </div>
-            </div>
-        </div>
-
-        <!-- INPUT ÚNICO: un prompt para los dos lados -->
-        <div class="chat-input-area">
-            <div class="input-box-wrapper">
-                <form id="cmpForm" action="comparar" method="post">
-                    <textarea placeholder="Ej: Producto: Audífonos $150.000, batería 20h. Descríbelo." rows="1" id="userInput" name="pregunta">${pregunta}</textarea>
-
-                    <!-- MARCA DE AGUA -->
-                    <div class="input-watermark">
-                        Nexus es una IA y puede cometer errores.
-                    </div>
-
-                    <!-- BOTÓN ENVIAR -->
-                    <button class="send-btn" type="submit" aria-label="Enviar mensaje">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
+                    <label class="cmp-label" for="preguntaB">📌 Prompt</label>
+                    <textarea id="preguntaB" name="preguntaB" class="cmp-preg" rows="4" placeholder="Escribe aquí el prompt de este lado…"><%= escPregB %></textarea>
+                    <div class="cmp-send"><button type="submit">▶ Enviar este lado</button></div>
+                    <% if (rB != null) { %>
+                    <h4>Respuesta</h4>
+                    <p class="cmp-resp"><%= rB.getTextoHtml() %></p>
+                    <small>Tokens: <%= rB.getTokens() %></small>
+                    <% } %>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT -->
     <script>
-        function sendMessage() {
-            // Envío real: el form hace POST al Servlet /comparar
-            document.getElementById('cmpForm').submit();
+        // Cada caja crece con su contenido
+        function redimensionar(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = Math.min(ta.scrollHeight, 220) + 'px';
+        }
+
+        ['preguntaA', 'preguntaB'].forEach(function (id) {
+            var ta = document.getElementById(id);
+            ta.addEventListener('input', function () { redimensionar(this); });
+            redimensionar(ta);
+        });
+
+        // Borradores: cada caja conserva su texto aunque te vayas a otra
+        // página y vuelvas por el menú.
+        var clavesBorrador = { preguntaA: 'nexus-borrador-cmpA', preguntaB: 'nexus-borrador-cmpB' };
+        Object.keys(clavesBorrador).forEach(function (id) {
+            var ta = document.getElementById(id);
+            var clave = clavesBorrador[id];
+            if (ta.value) {
+                // Texto que devolvió el servidor (prompt ya enviado): manda él
+                sessionStorage.setItem(clave, ta.value);
+            } else if (sessionStorage.getItem(clave)) {
+                ta.value = sessionStorage.getItem(clave);
+                redimensionar(ta);
+            }
+            ta.addEventListener('input', function () {
+                sessionStorage.setItem(clave, this.value);
+            });
+            ta.form.addEventListener('submit', function () {
+                // Ese panel se envió: su caja empieza limpia en el próximo load
+                sessionStorage.removeItem(clave);
+            });
+        });
+
+        // "Limpiar" borra también los borradores de los dos paneles
+        var lnkLimpiar = document.querySelector('a[href*="limpiar"]');
+        if (lnkLimpiar) {
+            lnkLimpiar.addEventListener('click', function () {
+                sessionStorage.removeItem(clavesBorrador.preguntaA);
+                sessionStorage.removeItem(clavesBorrador.preguntaB);
+            });
         }
 
         // Tema claro/oscuro: guarda tu elección en el navegador
-        // (los íconos de luna/sol se alternan por CSS con la clase "dark")
         function toggleTheme() {
             var dark = !document.body.classList.contains('dark');
             document.body.classList.toggle('dark', dark);
@@ -125,20 +158,7 @@
             }
         })();
 
-        const textarea = document.getElementById('userInput');
-        textarea.addEventListener('input', function () {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-        });
-
-        textarea.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Al cargar, baja solo hasta el final del contenido
+        // Al cargar, baja solo hasta el último contenido
         var cm = document.getElementById('chatMessages');
         if (cm) { cm.scrollTop = cm.scrollHeight; }
     </script>
