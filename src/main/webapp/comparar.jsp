@@ -12,16 +12,17 @@
         <% pageContext.setAttribute("paginaActiva", "comparar"); %>
 
         <%
-            // El aviso se muestra una sola vez: al pintarlo se borra de la sesión
             Object err = request.getAttribute("error");
             if (err == null) err = session.getAttribute("error");
             if (err != null) session.removeAttribute("error");
 
-            // Cada lado guarda su propio prompt
             String pregA = (String) session.getAttribute("preguntaA");
             if (pregA == null) pregA = "";
             String pregB = (String) session.getAttribute("preguntaB");
             if (pregB == null) pregB = "";
+
+            String pruebaA = Instrucciones.paraAtributo(Instrucciones.PROMPT_PRUEBA_1);
+            String pruebaB = Instrucciones.paraAtributo(Instrucciones.PROMPT_PRUEBA_2);
 
             RespuestaIA rA = (RespuestaIA) request.getAttribute("respuestaA");
             if (rA == null) rA = (RespuestaIA) session.getAttribute("respuestaA");
@@ -41,8 +42,6 @@
             </span>
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
             <a href="comparar?limpiar=1" title="Limpiar los paneles y empezar de cero" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:20px;padding:5px 14px;font-size:0.8rem;color:var(--accent-blue);text-decoration:none;">Limpiar</a>
-            <% Object cR = session.getAttribute("consultasRestantes"); Object cL = session.getAttribute("limiteConsultas"); %>
-            <small style="color:var(--text-muted);font-size:0.72rem;" title="Dato real enviado por Groq en cada respuesta">⏳ <%= (cR instanceof Integer && (Integer) cR >= 0) ? cR + "/" + cL + " consultas restantes hoy" : "Cuota: 1000 consultas por día" %></small>
             </div>
         </div>
 
@@ -72,11 +71,10 @@
                 <form class="cmp-panel" id="panelA" action="comparar" method="post">
                     <input type="hidden" name="lado" value="A">
                     <div class="cmp-panel-head">
-                        <span class="cmp-side">Izquierda</span>
+                        <span class="cmp-side">Prompt 1</span>
                     </div>
-                    <label class="cmp-label" for="preguntaA">📌 Prompt</label>
-                    <textarea id="preguntaA" name="preguntaA" class="cmp-preg" rows="4" placeholder="Escribe aquí el prompt de este lado…"><%= escPregA %></textarea>
-                    <div class="cmp-send"><button type="submit">▶ Enviar este lado</button></div>
+                    <textarea id="preguntaA" name="preguntaA" class="cmp-preg" rows="4" aria-label="Prompt 1" data-prueba="<%= pruebaA %>" placeholder="Escribe aquí tu Prompt 1…"><%= escPregA %></textarea>
+                    <div class="cmp-send"><button type="submit">▶ Enviar Prompt 1</button></div>
                     <% if (rA != null) { %>
                     <h4>Respuesta</h4>
                     <p class="cmp-resp"><%= rA.getTextoHtml() %></p>
@@ -87,11 +85,10 @@
                 <form class="cmp-panel" id="panelB" action="comparar" method="post">
                     <input type="hidden" name="lado" value="B">
                     <div class="cmp-panel-head">
-                        <span class="cmp-side">Derecha</span>
+                        <span class="cmp-side">Prompt 2</span>
                     </div>
-                    <label class="cmp-label" for="preguntaB">📌 Prompt</label>
-                    <textarea id="preguntaB" name="preguntaB" class="cmp-preg" rows="4" placeholder="Escribe aquí el prompt de este lado…"><%= escPregB %></textarea>
-                    <div class="cmp-send"><button type="submit">▶ Enviar este lado</button></div>
+                    <textarea id="preguntaB" name="preguntaB" class="cmp-preg" rows="4" aria-label="Prompt 2" data-prueba="<%= pruebaB %>" placeholder="Escribe aquí tu Prompt 2…"><%= escPregB %></textarea>
+                    <div class="cmp-send"><button type="submit">▶ Enviar Prompt 2</button></div>
                     <% if (rB != null) { %>
                     <h4>Respuesta</h4>
                     <p class="cmp-resp"><%= rB.getTextoHtml() %></p>
@@ -103,10 +100,9 @@
     </div>
 
     <script>
-        // Cada caja crece con su contenido
         function redimensionar(ta) {
             ta.style.height = 'auto';
-            ta.style.height = Math.min(ta.scrollHeight, 220) + 'px';
+            ta.style.height = Math.min(ta.scrollHeight, 440) + 'px';
         }
 
         ['preguntaA', 'preguntaB'].forEach(function (id) {
@@ -115,29 +111,27 @@
             redimensionar(ta);
         });
 
-        // Borradores: cada caja conserva su texto aunque te vayas a otra
-        // página y vuelvas por el menú.
         var clavesBorrador = { preguntaA: 'nexus-borrador-cmpA', preguntaB: 'nexus-borrador-cmpB' };
         Object.keys(clavesBorrador).forEach(function (id) {
             var ta = document.getElementById(id);
             var clave = clavesBorrador[id];
             if (ta.value) {
-                // Texto que devolvió el servidor (prompt ya enviado): manda él
                 sessionStorage.setItem(clave, ta.value);
             } else if (sessionStorage.getItem(clave)) {
                 ta.value = sessionStorage.getItem(clave);
+                redimensionar(ta);
+            } else if (ta.dataset.prueba) {
+                ta.value = ta.dataset.prueba;
                 redimensionar(ta);
             }
             ta.addEventListener('input', function () {
                 sessionStorage.setItem(clave, this.value);
             });
             ta.form.addEventListener('submit', function () {
-                // Ese panel se envió: su caja empieza limpia en el próximo load
                 sessionStorage.removeItem(clave);
             });
         });
 
-        // "Limpiar" borra también los borradores de los dos paneles
         var lnkLimpiar = document.querySelector('a[href*="limpiar"]');
         if (lnkLimpiar) {
             lnkLimpiar.addEventListener('click', function () {
@@ -146,7 +140,6 @@
             });
         }
 
-        // Tema claro/oscuro: guarda tu elección en el navegador
         function toggleTheme() {
             var dark = !document.body.classList.contains('dark');
             document.body.classList.toggle('dark', dark);
@@ -158,7 +151,6 @@
             }
         })();
 
-        // Al cargar, baja solo hasta el último contenido
         var cm = document.getElementById('chatMessages');
         if (cm) { cm.scrollTop = cm.scrollHeight; }
     </script>

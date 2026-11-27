@@ -1,7 +1,6 @@
-﻿<%@ page pageEncoding="UTF-8" %>
+<%@ page pageEncoding="UTF-8" %>
 <%@ page import="java.util.List,com.adso.ia.model.MensajeChat" %>
 <%
-   // paginaActiva la declara la página antes del include: "libre" | "comparar" | "prompts"
    String paginaActivaInc = (String) pageContext.getAttribute("paginaActiva");
    if (paginaActivaInc == null) paginaActivaInc = "libre"; %>
 <sidebar>
@@ -37,22 +36,6 @@
                 </a>
             </li>
         </ul>
-
-        <div class="history-category">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>
-            Personalización
-        </div>
-        <div class="option-group">
-            <div class="option-row">
-                <div class="row-body">
-                    <span class="dot"></span>
-                    <div class="row-text">
-                        <span class="row-title">Normal</span>
-                        <span class="row-desc">Respuesta directa y clara</span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="history-category">
             <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l4 2"/></svg>

@@ -1,7 +1,5 @@
 package com.adso.ia.model;
 
-// Un prompt generado por la IA en la pantalla "Generador":
-// guarda la idea del usuario, el objetivo elegido y el texto resultante.
 public class PromptGenerado implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -41,7 +39,6 @@ public class PromptGenerado implements java.io.Serializable {
         return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    // El prompt tal cual, escapado para pintarlo en el JSP
     public String getTextoHtml() {
         if (texto == null) return "";
         return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");

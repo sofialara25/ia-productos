@@ -34,20 +34,19 @@ public class IAServlet extends HttpServlet {
         RespuestaIA r = null;
         String error = null;
         try {
-            // Una sola orden para toda la app (Instrucciones.BASE)
             r = new GroqService().preguntar(Instrucciones.BASE, pregunta);
-            // Consultas restantes reales (dato oficial de Groq)
             req.getSession().setAttribute("consultasRestantes", r.getConsultasRestantes());
             req.getSession().setAttribute("limiteConsultas", r.getLimiteConsultas());
 
         } catch (GroqException e) {
-            error = "Error " + e.getCodigoHttp() + ": " + e.getMessage();
+            error = e.paraMostrar();
+            req.getSession().setAttribute("preguntaChat", pregunta);
 
         } catch (Exception e) {
             error = "Error inesperado: " + e.getMessage();
+            req.getSession().setAttribute("preguntaChat", pregunta);
         }
 
-        // Historial en la sesión: cada envío se suma a la lista (máximo 20)
         List<MensajeChat> historial =
                 (List<MensajeChat>) req.getSession().getAttribute("historial");
         if (historial == null) {
@@ -57,17 +56,13 @@ public class IAServlet extends HttpServlet {
         historial.add(new MensajeChat(pregunta, r, error));
         if (historial.size() > 20) historial.remove(0);
 
-        // PRG: redirigir en vez de reenviar. Así recargar NO repite la consulta.
         res.sendRedirect("index.jsp");
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        // ?limpiar=1 borra el historial y empieza un chat nuevo de verdad
         if ("1".equals(req.getParameter("limpiar"))) {
             req.getSession().removeAttribute("historial");
         }
-        // ?cargar=... trae un prompt generado desde el Generador y lo deja
-        // en la caja de texto para que solo falte escribir el producto.
         String cargar = req.getParameter("cargar");
         if (cargar != null && !cargar.isBlank()) {
             req.getSession().setAttribute("preguntaChat", cargar);

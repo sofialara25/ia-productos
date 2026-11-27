@@ -15,12 +15,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-// GENERADOR: el usuario escribe qué quiere lograr y la IA devuelve un prompt
-// listo para copiar. El prompt nace aquí y se puede llevar al chat o al comparador.
 @WebServlet("/generar")
 public class GenerarPromptServlet extends HttpServlet {
 
-    // Objetivos que ofrece el desplegable (valor = texto que va al modelo)
     private static final String[][] OBJETIVOS = {
         {"ficha", "Ficha técnica del producto"},
         {"venta", "Texto de venta / anuncio"},
@@ -46,7 +43,6 @@ public class GenerarPromptServlet extends HttpServlet {
             return;
         }
 
-        // El desplegable envía una clave corta; se traduce al texto completo
         String objetivoTexto = "Lo que yo escriba (sin objetivo fijo)";
         for (String[] o : OBJETIVOS) {
             if (o[0].equals(objetivo)) {
@@ -73,22 +69,20 @@ public class GenerarPromptServlet extends HttpServlet {
             ses.setAttribute("consultasRestantes", r.getConsultasRestantes());
             ses.setAttribute("limiteConsultas", r.getLimiteConsultas());
             ses.removeAttribute("errorGen");
-            ses.removeAttribute("idea"); // éxito: la caja queda vacía
+            ses.removeAttribute("idea");
 
         } catch (GroqException e) {
-            ses.setAttribute("errorGen", "Error " + e.getCodigoHttp() + ": " + e.getMessage());
-            ses.setAttribute("idea", idea); // error: se conserva para reintentar
+            ses.setAttribute("errorGen", e.paraMostrar());
+            ses.setAttribute("idea", idea);
         } catch (Exception e) {
             ses.setAttribute("errorGen", "Error inesperado: " + e.getMessage());
             ses.setAttribute("idea", idea);
         }
 
-        // PRG: recargar no vuelve a consumir una consulta
         res.sendRedirect("prompts.jsp");
     }
 
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        // ?limpiar=1 borra los prompts generados
         if ("1".equals(req.getParameter("limpiar"))) {
             HttpSession ses = req.getSession();
             ses.removeAttribute("promptsGenerados");

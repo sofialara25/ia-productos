@@ -1,10 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List,com.adso.ia.model.PromptGenerado,com.adso.ia.util.Instrucciones" %>
 <%
-    // Último prompt escrito en la caja (se conserva si hubo error)
     String ideaGuardada = (String) session.getAttribute("idea");
     if (ideaGuardada == null) ideaGuardada = "";
-    else session.removeAttribute("idea"); // se pinta una sola vez
+    else session.removeAttribute("idea");
 
     String errorGen = (String) session.getAttribute("errorGen");
     if (errorGen != null) session.removeAttribute("errorGen");
@@ -31,8 +30,6 @@
             </span>
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
             <a href="generar?limpiar=1" title="Borrar los prompts generados" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:20px;padding:5px 14px;font-size:0.8rem;color:var(--accent-blue);text-decoration:none;">Limpiar</a>
-            <% Object cR = session.getAttribute("consultasRestantes"); Object cL = session.getAttribute("limiteConsultas"); %>
-            <small style="color:var(--text-muted);font-size:0.72rem;" title="Dato real enviado por Groq en cada respuesta">⏳ <%= (cR instanceof Integer && (Integer) cR >= 0) ? cR + "/" + cL + " consultas restantes hoy" : "Cuota: 1000 consultas por día" %></small>
             </div>
         </div>
 
@@ -129,8 +126,6 @@
             });
         }
 
-        // Tema claro/oscuro: guarda tu elección en el navegador
-        // (los íconos de luna/sol se alternan por CSS con la clase "dark")
         function toggleTheme() {
             var dark = !document.body.classList.contains('dark');
             document.body.classList.toggle('dark', dark);
@@ -155,11 +150,8 @@
             }
         });
 
-        // Borrador: la idea que escribas se conserva aunque te vayas al chat
-        // o al comparador y vuelvas por el menú.
         var CLAVE_BORRADOR = 'nexus-borrador-prompts';
         if (textarea.value) {
-            // Texto que devolvió el servidor (idea conservada tras un error)
             sessionStorage.setItem(CLAVE_BORRADOR, textarea.value);
         } else if (sessionStorage.getItem(CLAVE_BORRADOR)) {
             textarea.value = sessionStorage.getItem(CLAVE_BORRADOR);
@@ -168,13 +160,10 @@
             sessionStorage.setItem(CLAVE_BORRADOR, this.value);
         });
         document.getElementById('genForm').addEventListener('submit', function () {
-            // Tras generar, la caja empieza limpia (si hubo error, el servidor
-            // devuelve la idea y este borrador ya no hace falta)
             sessionStorage.removeItem(CLAVE_BORRADOR);
         });
         if (textarea.value) textarea.dispatchEvent(new Event('input'));
 
-        // Al cargar, baja solo hasta el último prompt generado
         var cm = document.getElementById('chatMessages');
         if (cm) { cm.scrollTop = cm.scrollHeight; }
     </script>
